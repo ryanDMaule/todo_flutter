@@ -6,6 +6,7 @@ import '../widgets/app_header.dart';
 import '../widgets/add_task_dialog.dart';
 import '../widgets/status_legend.dart';
 import '../widgets/todo_list_item.dart';
+import '../widgets/task_details_dialog.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key, required this.controller});
@@ -88,6 +89,16 @@ class HomeScreen extends StatelessWidget {
                                     key: ValueKey(todo.id),
                                     todo: todo,
                                     number: index + 1,
+                                    onTap: () => showDialog<void>(
+                                      context: context,
+                                      barrierColor: AppColors.black.withValues(
+                                        alpha: 0.5,
+                                      ),
+                                      builder: (_) => TaskDetailsDialog(
+                                        todo: todo,
+                                        controller: controller,
+                                      ),
+                                    ),
                                   );
                                 },
                               ),
