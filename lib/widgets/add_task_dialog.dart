@@ -3,12 +3,18 @@ import 'package:flutter/services.dart';
 import 'dialog_action_button.dart';
 
 import '../controllers/todo_controller.dart';
+import '../services/audio_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 
 class AddTaskDialog extends StatefulWidget {
-  const AddTaskDialog({super.key, required this.controller});
+  const AddTaskDialog({
+    super.key,
+    required this.controller,
+    required this.audioService,
+  });
   final TodoController controller;
+  final AudioService audioService;
 
   @override
   State<AddTaskDialog> createState() => _AddTaskDialogState();
@@ -38,6 +44,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
     });
     try {
       await widget.controller.addTodo(text);
+      widget.audioService.playOther();
       if (mounted) Navigator.of(context).pop();
     } catch (_) {
       if (mounted) {
@@ -129,7 +136,10 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                         textColor: AppColors.white,
                         onPressed: _saving
                             ? null
-                            : () => Navigator.of(context).pop(),
+                            : () {
+                                widget.audioService.playBack();
+                                Navigator.of(context).pop();
+                              },
                       ),
                     ),
                     const SizedBox(width: 8),

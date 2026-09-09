@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'controllers/todo_controller.dart';
 import 'data/todo_database.dart';
 import 'screens/home_screen.dart';
+import 'services/audio_service.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_text_styles.dart';
 
@@ -23,12 +24,14 @@ class TodoApp extends StatefulWidget {
 class _TodoAppState extends State<TodoApp> {
   late final TodoDatabase _database;
   late final TodoController _controller;
+  late final AudioService _audioService;
 
   @override
   void initState() {
     super.initState();
     _database = TodoDatabase();
     _controller = TodoController(_database);
+    _audioService = AudioService();
     unawaited(_load());
   }
 
@@ -43,6 +46,7 @@ class _TodoAppState extends State<TodoApp> {
   @override
   void dispose() {
     _controller.dispose();
+    unawaited(_audioService.dispose());
     unawaited(_database.close());
     super.dispose();
   }
@@ -67,7 +71,7 @@ class _TodoAppState extends State<TodoApp> {
           onError: AppColors.white,
         ),
       ),
-      home: HomeScreen(controller: _controller),
+      home: HomeScreen(controller: _controller, audioService: _audioService),
     );
   }
 }

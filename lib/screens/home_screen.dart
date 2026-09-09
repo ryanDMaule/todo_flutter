@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../controllers/todo_controller.dart';
+import '../services/audio_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../widgets/app_header.dart';
@@ -10,8 +11,10 @@ import '../widgets/todo_list_item.dart';
 import '../widgets/task_details_dialog.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key, required this.controller});
+  HomeScreen({super.key, required this.controller, AudioService? audioService})
+    : audioService = audioService ?? AudioService();
   final TodoController controller;
+  final AudioService audioService;
 
   @override
   Widget build(BuildContext context) {
@@ -66,6 +69,7 @@ class HomeScreen extends StatelessWidget {
                                             .withValues(alpha: 0.5),
                                         builder: (_) => ClearAllDialog(
                                           controller: controller,
+                                          audioService: audioService,
                                         ),
                                       ),
                                 label: 'Clear all',
@@ -100,16 +104,19 @@ class HomeScreen extends StatelessWidget {
                                     key: ValueKey(todo.id),
                                     todo: todo,
                                     number: index + 1,
-                                    onTap: () => showDialog<void>(
-                                      context: context,
-                                      barrierColor: AppColors.black.withValues(
-                                        alpha: 0.5,
-                                      ),
-                                      builder: (_) => TaskDetailsDialog(
-                                        todo: todo,
-                                        controller: controller,
-                                      ),
-                                    ),
+                                    onTap: () {
+                                      audioService.playClick();
+                                      showDialog<void>(
+                                        context: context,
+                                        barrierColor: AppColors.black
+                                            .withValues(alpha: 0.5),
+                                        builder: (_) => TaskDetailsDialog(
+                                          todo: todo,
+                                          controller: controller,
+                                          audioService: audioService,
+                                        ),
+                                      );
+                                    },
                                   );
                                 },
                               ),
@@ -124,11 +131,17 @@ class HomeScreen extends StatelessWidget {
               child: SizedBox(
                 width: double.infinity,
                 child: _ScreenButton(
-                  onPressed: () => showDialog<void>(
-                    context: context,
-                    barrierColor: AppColors.black.withValues(alpha: 0.5),
-                    builder: (_) => AddTaskDialog(controller: controller),
-                  ),
+                  onPressed: () {
+                    audioService.playClick();
+                    showDialog<void>(
+                      context: context,
+                      barrierColor: AppColors.black.withValues(alpha: 0.5),
+                      builder: (_) => AddTaskDialog(
+                        controller: controller,
+                        audioService: audioService,
+                      ),
+                    );
+                  },
                   label: 'Add Task',
                   color: AppColors.green,
                   textColor: AppColors.black,

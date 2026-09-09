@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../controllers/todo_controller.dart';
 import '../models/todo.dart';
+import '../services/audio_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import 'dialog_action_button.dart';
@@ -11,9 +12,11 @@ class TaskDetailsDialog extends StatefulWidget {
     super.key,
     required this.todo,
     required this.controller,
+    required this.audioService,
   });
   final Todo todo;
   final TodoController controller;
+  final AudioService audioService;
 
   @override
   State<TaskDetailsDialog> createState() => _TaskDetailsDialogState();
@@ -39,8 +42,10 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
     try {
       if (delete) {
         await widget.controller.deleteTodo(widget.todo.id);
+        widget.audioService.playClear();
       } else {
         await widget.controller.changeStatus(widget.todo.id, _selected);
+        widget.audioService.playOther();
       }
       if (mounted) Navigator.of(context).pop();
     } catch (_) {
@@ -91,6 +96,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                   groupValue: _selected,
                   onChanged: (value) {
                     if (!_saving && value != null) {
+                      widget.audioService.playClick();
                       setState(() => _selected = value);
                     }
                   },
@@ -156,7 +162,12 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                   label: 'Cancel',
                   color: AppColors.red,
                   textColor: AppColors.white,
-                  onPressed: _saving ? null : () => Navigator.of(context).pop(),
+                  onPressed: _saving
+                      ? null
+                      : () {
+                          widget.audioService.playBack();
+                          Navigator.of(context).pop();
+                        },
                 ),
               ],
             ),
@@ -170,7 +181,12 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
     return MergeSemantics(
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: _saving ? null : () => setState(() => _selected = status),
+        onTap: _saving
+            ? null
+            : () {
+                widget.audioService.playClick();
+                setState(() => _selected = status);
+              },
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 4),
           child: Row(

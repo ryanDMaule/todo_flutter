@@ -11,6 +11,7 @@ dependencies:
     sdk: flutter
   drift: ^2.31.0
   drift_flutter: ^0.2.8
+  audioplayers: ^6.7.1
 
 dev_dependencies:
   flutter_test:
@@ -23,6 +24,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/maule_logo.png
+    - assets/audio/
   fonts:
     - family: VT323
       fonts:

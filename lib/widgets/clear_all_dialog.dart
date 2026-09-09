@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
 
 import '../controllers/todo_controller.dart';
+import '../services/audio_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import 'dialog_action_button.dart';
 
 class ClearAllDialog extends StatefulWidget {
-  const ClearAllDialog({super.key, required this.controller});
+  const ClearAllDialog({
+    super.key,
+    required this.controller,
+    required this.audioService,
+  });
 
   final TodoController controller;
+  final AudioService audioService;
 
   @override
   State<ClearAllDialog> createState() => _ClearAllDialogState();
@@ -27,6 +33,7 @@ class _ClearAllDialogState extends State<ClearAllDialog> {
 
     try {
       await widget.controller.clearAll();
+      widget.audioService.playClear();
       if (mounted) Navigator.of(context).pop();
     } catch (_) {
       if (mounted) {
@@ -95,7 +102,10 @@ class _ClearAllDialogState extends State<ClearAllDialog> {
                         textColor: AppColors.black,
                         onPressed: _clearing
                             ? null
-                            : () => Navigator.of(context).pop(),
+                            : () {
+                                widget.audioService.playBack();
+                                Navigator.of(context).pop();
+                              },
                       ),
                     ),
                     const SizedBox(width: 8),
