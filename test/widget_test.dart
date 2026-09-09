@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -94,7 +95,6 @@ void main() {
       expect(tester.takeException(), isNull);
       final survivingId = controller.todos[2].id;
       await tester.tap(find.text('Clear all'));
-      await tester.tap(find.text('Add Task'));
       expect(controller.todos.length, 3);
 
       await tester.runAsync(
@@ -125,6 +125,101 @@ void main() {
     expect(find.byKey(const ValueKey('live-clock')), findsOneWidget);
     await tester.pump(const Duration(seconds: 2));
     expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('New Task validates, persists, and updates the list', (
+    tester,
+  ) async {
+    await tester.runAsync(controller.loadTodos);
+    await tester.pumpWidget(
+      MaterialApp(home: HomeScreen(controller: controller)),
+    );
+    await tester.tap(find.text('Add Task'));
+    await tester.pumpAndSettle();
+    expect(find.text('NEW TASK'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), '   ');
+    await tester.tap(find.text('Add'));
+    await tester.pump();
+    expect(find.text('Please enter task text'), findsOneWidget);
+    expect(controller.todos, isEmpty);
+    await tester.enterText(
+      find.byType(TextField),
+      '  Visit the library\nBuy milk  ',
+    );
+    await tester.pumpAndSettle();
+    final saved = Completer<void>();
+    void onChange() {
+      if (controller.todos.isNotEmpty && !saved.isCompleted) saved.complete();
+    }
+
+    controller.addListener(onChange);
+    await tester.tap(find.text('Add'));
+    await tester.pump();
+    await tester.runAsync(
+      () => saved.future.timeout(const Duration(seconds: 5)),
+    );
+    controller.removeListener(onChange);
+    await tester.pumpAndSettle();
+    expect(find.text('NEW TASK'), findsNothing);
+    expect(find.text('Visit the library\nBuy milk'), findsOneWidget);
+    expect(find.text('1 Total task(s)'), findsOneWidget);
+    expect(find.text('1'), findsOneWidget);
+    final rows = await tester.runAsync(database.loadTodos);
+    expect(rows!.single.taskText, 'Visit the library\nBuy milk');
+    expect(rows.single.status, TodoStatus.underway);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('Cancel, outside tap, and back discard drafts', (tester) async {
+    await tester.runAsync(controller.loadTodos);
+    await tester.pumpWidget(
+      MaterialApp(home: HomeScreen(controller: controller)),
+    );
+    for (final dismissal in ['cancel', 'outside', 'back']) {
+      await tester.tap(find.text('Add Task'));
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        isEmpty,
+      );
+      await tester.enterText(find.byType(TextField), 'Discard this');
+      if (dismissal == 'cancel') {
+        await tester.tap(find.text('Cancel'));
+      } else if (dismissal == 'outside') {
+        await tester.tapAt(const Offset(5, 5));
+      } else {
+        await tester.binding.handlePopRoute();
+      }
+      await tester.pumpAndSettle();
+      expect(find.text('NEW TASK'), findsNothing);
+      expect(controller.todos, isEmpty);
+    }
+    expect(await tester.runAsync(database.loadTodos), isEmpty);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('dialog controls remain reachable with keyboard inset', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetViewInsets);
+    await tester.runAsync(controller.loadTodos);
+    await tester.pumpWidget(
+      MaterialApp(home: HomeScreen(controller: controller)),
+    );
+    await tester.tap(find.text('Add Task'));
+    await tester.pumpAndSettle();
+    tester.view.viewInsets = const FakeViewPadding(bottom: 320);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Add'));
+    expect(tester.getBottomRight(find.text('Add')).dy, lessThan(480));
+    expect(tester.takeException(), isNull);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
     await tester.pumpWidget(const SizedBox.shrink());
   });
 }
