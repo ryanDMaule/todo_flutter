@@ -4,6 +4,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../widgets/app_header.dart';
 import '../widgets/add_task_dialog.dart';
+import '../widgets/clear_all_dialog.dart';
 import '../widgets/status_legend.dart';
 import '../widgets/todo_list_item.dart';
 import '../widgets/task_details_dialog.dart';
@@ -55,8 +56,18 @@ class HomeScreen extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            const Expanded(
+                            Expanded(
                               child: _ScreenButton(
+                                onPressed: controller.todos.isEmpty
+                                    ? null
+                                    : () => showDialog<void>(
+                                        context: context,
+                                        barrierColor: AppColors.black
+                                            .withValues(alpha: 0.5),
+                                        builder: (_) => ClearAllDialog(
+                                          controller: controller,
+                                        ),
+                                      ),
                                 label: 'Clear all',
                                 color: AppColors.red,
                                 textColor: AppColors.white,
@@ -131,7 +142,6 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-/// Keep reference styling; Clear all remains disabled.
 class _ScreenButton extends StatelessWidget {
   const _ScreenButton({
     required this.label,
